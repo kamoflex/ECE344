@@ -1,0 +1,102 @@
+18c18
+< 		phy_block_nr = (int)in->in.i_block_nr[log_block_nr];
+---
+> 		phy_block_nr = (int)in->in.i_block_nr[log_block_nr]; // we're linking it directly to a direct block
+22c22
+< 		if (log_block_nr >= NR_INDIRECT_BLOCKS)
+---
+> 		if (log_block_nr >= NR_INDIRECT_BLOCKS){ // THIS IS FOR DOUBLY INDIRECT BLOCKS ****************************************
+23a24
+> 		}// *******************************************************************************************************************
+46c47
+< 
+---
+> 	size_t rem_size = size; //remaining size to be written
+51,52c52,77
+< 	if (block_ix + size > BLOCK_SIZE) {
+< 		TBD();
+---
+> 	if (block_ix + size > BLOCK_SIZE) { // reading across blocks **************************************************************
+> 		
+> 		//const char *buf_ptr = buf;
+> 		size_t inserted_size = BLOCK_SIZE - block_ix; //we're filling in first the left overs of the first block
+> 		rem_size = size - inserted_size; //decrementing the total remaining size
+> 		if ((ret = testfs_read_block(in, block_nr, block)) < 0)
+> 			return ret;
+> 		memcpy(buf, block + block_ix, size); //increment buffer pointer
+> 		write_blocks(in->sb, block, ret, 1);
+> 		buf += inserted_size; ///incrementing pointer to the next part to be inserted
+> 		block_nr++; // logical block number in the file
+> 		block_ix = 0; //  index or offset in the block
+> 
+> 		while(rem_size > BLOCK_SIZE){ //this loop is for writing full blocks only
+> 			//inserted_size = BLOCK_SIZE;
+> 			rem_size -= BLOCK_SIZE;
+> 			if ((ret = testfs_read_block(in, block_nr, block)) < 0)
+> 				return ret; //could not allocate a block
+> 			memcpy(buf, block, size); //increment buffer pointer
+> 			write_blocks(in->sb, block, ret, 1);
+> 			buf += BLOCK_SIZE; ///incrementing pointer to the next part to be inserted
+> 			block_nr++; // logical block number in the file
+> 			//block_ix = 0; //  index or offset in the block		
+> 
+> 		//TBD();
+> 		}// ***********************************************************************************************************************
+56c81
+< 	memcpy(buf, block + block_ix, size);
+---
+> 	memcpy(buf, block, size);
+90,91c115,117
+< 	if (log_block_nr >= NR_INDIRECT_BLOCKS)
+< 		TBD();
+---
+> 	if (log_block_nr >= NR_INDIRECT_BLOCKS){// ********************************************************************************
+> 		//TBD();
+> 	}// ***********************************************************************************************************************
+129,131c155,184
+< 	if (block_ix + size > BLOCK_SIZE) {
+< 		TBD();
+< 	}
+---
+> 	size_t rem_size = size; //remaining size to be written
+> 	if (block_ix + size > BLOCK_SIZE) {// to write data for files larger than a block size ***********************************
+> 		//handle the case for when the size is larger than 32GBs
+> 		
+> 		//const char *buf_ptr = buf;
+> 		size_t inserted_size = BLOCK_SIZE - block_ix; //we're filling in first the left overs of the first block
+> 		rem_size = size - inserted_size; //decrementing the total remaining size
+> 		ret = testfs_allocate_block(in, block_nr, block);
+> 		if (ret < 0)
+> 			return ret; //could not allocate a block
+> 		memcpy(block + block_ix, buf, inserted_size); //increment buffer pointer
+> 		write_blocks(in->sb, block, ret, 1);
+> 		buf += inserted_size; ///incrementing pointer to the next part to be inserted
+> 		block_nr++; // logical block number in the file
+> 		block_ix = 0; //  index or offset in the block
+> 
+> 		while(rem_size > BLOCK_SIZE){ //this loop is for writing full blocks only
+> 			//inserted_size = BLOCK_SIZE;
+> 			rem_size -= BLOCK_SIZE;
+> 			ret = testfs_allocate_block(in, block_nr, block);
+> 			if (ret < 0)
+> 				return ret; //could not allocate a block
+> 			memcpy(block /*+ block_ix*/, buf, BLOCK_SIZE); //increment buffer pointer
+> 			write_blocks(in->sb, block, ret, 1);
+> 			buf += BLOCK_SIZE; //incrementing pointer to the next part to be inserted
+> 			block_nr++; // logical block number in the file
+> 			//block_ix = 0; //  index or offset in the block			
+> 		} // *****************************************************************************************************************
+> 		//TBD();
+> 	} 
+136c189
+< 	memcpy(block + block_ix, buf, size);
+---
+> 	memcpy(block /*+ block_ix*/, buf, size);
+181c234
+< 	if (e_block_nr > 0) {
+---
+> 	if (e_block_nr > 0) { // *************************************************************************************************
+183c236
+< 	}
+---
+> 	} // *********************************************************************************************************************

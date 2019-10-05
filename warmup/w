@@ -1,0 +1,203 @@
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "common.h"
+#include "point.h"
+#include "sorted_points.h"
+
+/* this structure should store all the points in a list in sorted order. */
+struct sorted_points {
+	/* you can define this struct to have whatever fields you want. */
+	struct individual_points* head; 
+};
+
+struct individual_points {
+	double x;
+	double y;
+	double distance;
+	struct individual_points* next; 
+
+};
+
+/* think about where you are going to store a pointer to the next element of the
+ * linked list? if needed, you may define other structures. */
+
+struct sorted_points *
+sp_init()
+{
+	struct sorted_points *sp;
+
+	sp = (struct sorted_points *)malloc(sizeof(struct sorted_points));
+	assert(sp);
+
+	sp->head = NULL; 
+
+	return sp;
+}
+
+void//verify whether or not you need to delete the outer struct (sp), otherwise completed
+sp_destroy(struct sorted_points *sp)
+{
+	struct individual_points *current=sp->head;
+	struct individual_points *next;
+	while(current!=NULL){
+		next = current->next;
+		free(current);
+		current = next;
+	
+	}
+	free(sp);
+	return;
+}
+
+int//make it so it adds in order and check that the malloc works
+sp_add_point(struct sorted_points *sp, double x, double y)
+{
+	struct individual_points* current; 
+	struct individual_points* temp;
+	struct  individual_points* node = (struct individual_points *)malloc(sizeof(struct individual_points));
+	if (node == NULL){
+		return 0;
+	}
+	else{
+		node->x = x;
+		node->y = y;
+		node->distance = sqrt(((node->x)*(node->x))+((node->y)*(node->y)));
+		if(sp->head == NULL){ //it is an empty linked list
+			sp->head-> &node;
+			node->next = NULL;
+		}
+		else{ //not empty list
+			current = sp->head; //where the current counter is
+			if(current->next==NULL && current->distance < node->distance){ 
+				current->next =node;
+				node->next=NULL;	
+			}
+			else if(current->next==NULL && current->distance > node->distance){
+				node->next = current;
+			      	current->next=NULL;
+				sp->head=node;	
+			}
+			else{
+				while(current->next!=NULL){//this is the part where i iterate and check condition t where it should be placed
+					
+				}
+			}
+	
+
+		
+		}
+		return 1;
+	}
+
+}
+
+int//COMPLETED
+sp_remove_first(struct sorted_points *sp, struct point *ret)
+{
+	if(sp->head == NULL){
+		return 0;
+	}
+	else{
+		struct individual_points* temp = sp->head->next;
+		ret->x = sp->head->x;
+		ret->y = sp->head->y;
+		free(head);
+		head = temp;
+	return 1;
+	}
+
+}
+
+int//COMPLETED
+sp_remove_last(struct sorted_points *sp, struct point *ret)
+{
+	if(sp->head == NULL){
+		return 0;
+	}
+	else{
+		struct individual_points* current = sp->head;
+		struct individual_points* temp; 	
+		while(current->next!=NULL){
+			temp = current;
+			current = current->next;			
+		}
+		ret->x = temp->next->x;
+		ret->y = temp->next->y; 
+		free(temp->next);
+		temp->next=NULL;
+		return 1;
+	}
+}
+
+int//COMPLETED
+sp_remove_by_index(struct sorted_points *sp, int index, struct point *ret)
+{
+	struct individual_points* current=sp->head;
+	struct individual_points* temp;
+        if(index==0){
+		if(current ==  NULL){
+			return 0;
+		}
+		else {
+			temp = current->next;
+			ret->x=current->x;
+			ret->y=current->y;
+			free(current);
+			sp->head=temp;
+			return 1;
+		}
+	}
+	else if(index > 0){	
+		for(unsigned i =0; i<index -1;i++){
+			if(current==NULL||current->next==NULL){
+				return 0;
+			}
+			else{//finish this
+				temp=current;
+				current = current->next;
+			}
+		}
+		ret->x = current->x;
+		ret->y = current->y;
+		temp->next = current->next;
+		free(current);
+		return 1;	
+	}
+	
+}
+
+int//COMPLETED
+sp_delete_duplicates(struct sorted_points *sp)
+{
+	int duplicates=0;
+	struct individual_points* current=sp->head;
+	struct individual_points* temp = current->next;
+	if(current == NULL || current->next==NULL){
+		return 0;
+	} 
+	else{
+		while(current->next!=NULL){
+			temp = current->next;
+			if(current->x == temp->x && current->y == temp->y){
+				duplicates++;
+				current->next = temp->next;
+				free(temp);
+				current=current->next;
+			}
+			else{
+				current=current->next;
+			}
+		}		
+	}
+	return duplicates;
+}
+
+
+
+
+
+
+
+
+
